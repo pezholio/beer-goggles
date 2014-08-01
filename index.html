@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Beer Goggles</title>
+<style>
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.428571429;
+  color: #333333;
+  background-color: white;
+  width: 950px;
+}
+
+</style>
+</style>
+<body>
+  <svg class="chart"></svg>
+</body>
+<script src="d3.v3.min.js"></script>
+<script>
+
+var colourScale = d3.scale.category20b();
+
+var margin = {top: 20, right: 40, bottom: 30, left: 40},
+    width = 950 - (margin.left + margin.right),
+    height = 600 - (margin.top + margin.bottom);
+
+var y = d3.scale.linear()
+    .range([0, height]);
+
+var chart = d3.select(".chart")
+    .attr("width", width  + margin.left + margin.right)
+    .attr("height", height  + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.csv("checkins.csv", function(error, data) {
+  total = 0
+  total = data.map(function(e) { total += 1 })
+  y0 = 0
+  y.domain([0, data.length]);
+
+  checkins = d3.nest()
+               .key(function(d) {return d["Style"]})
+               .sortValues(d3.ascending)
+               .entries(data)
+               .map(function(c) {
+                  return {
+                      key: c.key,
+                      value: c.values.length
+                    }
+                })
+                .sort(function(a,b) { return b.value - a.value })
+               .map(function(c) {
+                  return {
+                    key: c.key,
+                    value: c.value,
+                    y0: y0,
+                    y1: y0 += c.value
+                  }
+                });
+
+  chart.selectAll(".bar")
+    .data(checkins)
+  .enter().append("rect")
+    .attr("class", "bar")
+    .attr("x", 0)
+    .attr("y", function(d) { return y(d.y0); })
+    .attr("height", function(d) { return y(d.y1) - y(d.y0); })
+    .attr("width", 350)
+    .attr("title", function(d) { return d.key })
+    .attr("fill", function(d,i) { return colourScale(i) });
+
+})
+
+</script>
