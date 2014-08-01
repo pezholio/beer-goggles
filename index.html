@@ -10,54 +10,104 @@ body {
   color: #333333;
   background-color: white;
   width: 950px;
+  position: relative;
+}
+
+#pint {
+  position: absolute;
+  top: 0;
+  left: 40px;
+  z-index: 50;
+}
+
+.overlay {
+  position: absolute;
+  z-index: 60;
+  top: 0;
+}
+
+.label {
+  position: absolute;
+  left: 400px;
+  height: 22px;
+  background-color: #F79400;
+  padding: 2px 6px;
 }
 
 </style>
 </style>
 <body>
+  <img src="pint.png" id="pint" alt="" />
   <svg class="chart"></svg>
+  <svg class="overlay"></svg>
 </body>
 <script src="d3.v3.min.js"></script>
 <script>
 
 var colourScale = d3.scale.category20b();
 
-var margin = {top: 20, right: 40, bottom: 30, left: 40},
+var margin = {top: 45, right: 40, bottom: 0, left: 40},
     width = 950 - (margin.left + margin.right),
-    height = 600 - (margin.top + margin.bottom);
+    height = 580;
 
 var y = d3.scale.linear()
     .range([0, height]);
 
 var chart = d3.select(".chart")
     .attr("width", width  + margin.left + margin.right)
-    .attr("height", height  + margin.top + margin.bottom)
+    .attr("height", height)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var overlay = d3.select(".overlay")
+    .attr("width", width  + margin.left + margin.right)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var label = d3.select("body").append("div")
+  .attr("class", "label")
+  .style("opacity", 0);
+
 
 d3.csv("checkins.csv", function(error, data) {
   total = 0
   total = data.map(function(e) { total += 1 })
-  y0 = 0
-  y.domain([0, data.length]);
+
+  var y0 = 0
+
+  others = {
+    key: "others",
+    value: 0
+  }
 
   checkins = d3.nest()
                .key(function(d) {return d["Style"]})
                .sortValues(d3.ascending)
                .entries(data)
                .map(function(c) {
+                 if (c.values.length > 4) {
                   return {
                       key: c.key,
                       value: c.values.length
                     }
+                  } else {
+                    others.value += c.values.length
+                    return null
+                  }
                 })
+                .filter(function(c) { return c != null })
                 .sort(function(a,b) { return b.value - a.value })
-               .map(function(c) {
+
+  checkins.push(others)
+  y.domain([0, data.length - others.value]);
+
+  checkins = checkins.map(function(c) {
                   return {
                     key: c.key,
                     value: c.value,
                     y0: y0,
-                    y1: y0 += c.value
+                    y1: y0 += y(c.value)
                   }
                 });
 
@@ -68,9 +118,41 @@ d3.csv("checkins.csv", function(error, data) {
     .attr("x", 0)
     .attr("y", function(d) { return y(d.y0); })
     .attr("height", function(d) { return y(d.y1) - y(d.y0); })
-    .attr("width", 350)
+    .attr("width", 330)
     .attr("title", function(d) { return d.key })
-    .attr("fill", function(d,i) { return colourScale(i) });
+    .attr("fill", function(d,i) { return colourScale(i) })
+
+  overlay.selectAll(".bar")
+    .data(checkins)
+  .enter().append("rect")
+    .attr("class", "bar")
+    .attr("x", 0)
+    .attr("y", function(d) { return y(d.y0) })
+    .attr("height", function(d) { return y(d.y1) - y(d.y0); })
+    .attr("width", 330)
+    .attr("title", function(d) { return d.key })
+    .style("opacity", 0)
+    .on('mouseover', function(d) {
+      label.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+      label.html("<strong>" + d.key + "</strong>: " + d.value )
+              .style("top", ((y(d.y1) - y(d.y0)) / 2 + y(d.y0)) + 26 + "px")
+    })
+    .on('mouseout', function(d) {
+      label.transition()
+                    .duration(200)
+                    .style("opacity", 0);
+    });
+
+   chart.append("rect")
+   .attr("width", 330)
+   .attr("height", height)
+   .attr("fill", "#fff")
+   .attr("transform", "translate(0,0)")
+   .transition()
+     .duration(2000)
+     .attr("height", 0)
 
 })
 
