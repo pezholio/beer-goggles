@@ -94,24 +94,21 @@ input {
 
 var colourScale = d3.scale.category20b();
 
-var margin = {top: 45, right: 40, bottom: 0, left: 0},
-    width = 950 - (margin.left + margin.right),
+var width = 330
     height = 657;
 
 var y = d3.scale.linear()
     .range([0, height]);
 
 var chart = d3.select(".chart")
-    .attr("width", width  + margin.left + margin.right)
+    .attr("width", width)
     .attr("height", height)
   .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var overlay = d3.select(".overlay")
-    .attr("width", width  + margin.left + margin.right)
+    .attr("width", width)
     .attr("height", height)
   .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var label = d3.select("#vis").append("div")
   .attr("class", "label")
