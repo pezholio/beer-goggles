@@ -82,7 +82,7 @@ var colourScale = d3.scale.category20b();
 
 var margin = {top: 45, right: 40, bottom: 0, left: 0},
     width = 950 - (margin.left + margin.right),
-    height = 580;
+    height = 657;
 
 var y = d3.scale.linear()
     .range([0, height]);
@@ -120,7 +120,6 @@ function loadChart(type) {
 
     checkins = d3.nest()
                  .key(function(d) {return d[type]})
-                 .sortValues(d3.ascending)
                  .entries(data)
                  .map(function(c) {
                    if (c.values.length > 4) {
@@ -137,7 +136,7 @@ function loadChart(type) {
                   .sort(function(a,b) { return b.value - a.value })
 
     checkins.push(others)
-    y.domain([0, data.length - others.value]);
+    y.domain([0, data.length]);
 
     checkins = checkins.map(function(c) {
                     return {
